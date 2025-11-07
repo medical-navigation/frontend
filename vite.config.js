@@ -8,6 +8,7 @@ export default defineConfig({
         outDir: 'dist',      // куда складывать файлы сборки
         emptyOutDir: true,   // очищает dist перед новой сборкой
     },
+<<<<<<< HEAD
     server: {
       proxy: {
         '/api': {
@@ -16,4 +17,6 @@ export default defineConfig({
         }
       }
     }
+=======
+>>>>>>> 6928c1d720d677bf28edd5ba142d166a01cccb39
 })
