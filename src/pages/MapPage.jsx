@@ -8,6 +8,7 @@ import HospitalButton from '../components/HospitalButton.jsx'
 import ZoomControls from '../components/ZoomControls.jsx'
 import EditCarPanel from '../components/EditCarPanel.jsx'
 import AddHospitalPanel from '../components/AddHospitalPanel.jsx'
+import AddUserModal from '../components/AddUserModal.jsx'
 import { FaSearch, FaFilter, FaEdit, FaHospital, FaPlus, FaSignOutAlt, FaUsers, FaAmbulance, FaTimes, FaCheck, FaUser } from 'react-icons/fa'
 
 // Иконка по умолчанию для маркеров Leaflet поправка путей (иначе не видно маркеров в Vite)
@@ -45,6 +46,8 @@ export default function MapPage({ regionBounds, regionCenter, user, hospitals = 
   const [editCar, setEditCar] = useState(null) // {regNumber,gpsNumber,hospital}
   const [showAddHospital, setShowAddHospital] = useState(false)
   const [newHospitalName, setNewHospitalName] = useState('')
+  const [showAddUser, setShowAddUser] = useState(false)
+  const [newUser, setNewUser] = useState({ email: '', password: '', hospital: '' })
 
   const mapBounds = useMemo(() => {
     if (regionBounds && regionBounds.length === 2) return regionBounds
@@ -78,15 +81,23 @@ export default function MapPage({ regionBounds, regionCenter, user, hospitals = 
     setShowAddHospital(false)
     setNewHospitalName('')
   }
+  const handleAddUserClick = () => {
+    setNewUser({ email: '', password: '', hospital: newHospitalName || '' })
+    setShowAddUser(true)
+  }
+  const handleSaveUser = () => {
+    // TODO: отправить newUser на сервер
+    setShowAddUser(false)
+  }
 
   return (
     <div className="map-page">
       {/* Карта */}
-      <MapContainer className="map-root" center={center} zoom={10} bounds={mapBounds || undefined} style={{height: '100vh', width: '100vw'}} zoomControl={false}>
+      <MapContainer className="map-root" center={center} zoom={10} bounds={mapBounds || undefined} style={{height: '100vh', width: '100vw'}} zoomControl={false} attributionControl={false}>
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+        <div className="leaflet-bottom leaflet-right" style={{display:'none'}} />
         <LeafletZoomBindings />
         {filteredAmbulances.map((car) => (
           <Marker key={car.id} position={car.position}>
@@ -127,7 +138,7 @@ export default function MapPage({ regionBounds, regionCenter, user, hospitals = 
           {/* Поле Фильтр (для всех, фильтрация по больнице) */}
           <div className="field">
             <div className="field-icon"><FaHospital /></div>
-            <input className="field-input" placeholder="Фильтр по ��ольнице" value={filterOrg} onChange={(e)=>setFilterOrg(e.target.value)} />
+            <input className="field-input" placeholder="Фильтр по больнице" value={filterOrg} onChange={(e)=>setFilterOrg(e.target.value)} />
           </div>
 
           {/* Поиск доступен всем */}
@@ -149,6 +160,23 @@ export default function MapPage({ regionBounds, regionCenter, user, hospitals = 
                 </button>
               </div>
             ))}
+          </div>
+
+          <div className="spacer" />
+
+          <div className="list-item align-center">
+            <div className="icon-left"><FaHospital /></div>
+            <div className="list-body">
+              <div className="hospital-title">{user?.hospitalName || 'Моя организация'}</div>
+            </div>
+          </div>
+
+          <div className="user-row align-center">
+            <div className="icon-left"><FaUser /></div>
+            <div className="user-name">{user?.login || 'user'}</div>
+            <button className="icon-btn" title="Выйти" onClick={() => window.location.assign('/login')}>
+              <FaSignOutAlt />
+            </button>
           </div>
         </aside>
       )}
@@ -179,22 +207,7 @@ export default function MapPage({ regionBounds, regionCenter, user, hospitals = 
             ))}
           </div>
 
-          <div className="divider" />
-
-          <div className="list-item">
-            <div className="icon-left"><FaHospital /></div>
-            <div className="list-body">
-              <div className="hospital-title">{user?.hospitalName || 'Моя организация'}</div>
-            </div>
-          </div>
-
-          <div className="user-row">
-            <div className="icon-left"><FaUser /></div>
-            <div className="user-name">{user?.login || 'user'}</div>
-            <button className="icon-btn" title="Выйти">
-              <FaSignOutAlt />
-            </button>
-          </div>
+          
         </aside>
       )}
 
@@ -212,9 +225,17 @@ export default function MapPage({ regionBounds, regionCenter, user, hospitals = 
         value={newHospitalName}
         onChange={setNewHospitalName}
         onAddCar={handleAddCarFromHospital}
-        onAddUser={() => { /* TODO */ }}
+        onAddUser={handleAddUserClick}
         onSave={handleSaveHospital}
         onClose={() => setShowAddHospital(false)}
+      />
+
+      <AddUserModal
+        open={showAddUser}
+        value={newUser}
+        onChange={setNewUser}
+        onSave={handleSaveUser}
+        onClose={() => setShowAddUser(false)}
       />
     </div>
   )

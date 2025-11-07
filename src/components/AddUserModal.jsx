@@ -1,13 +1,14 @@
 import { FaTimes, FaCheck } from 'react-icons/fa'
 
-export default function EditCarPanel({ car, onChange, onSave, onClose }) {
-  if (!car) return null
+export default function AddUserModal({ open, value, onChange, onSave, onClose }) {
+  if (!open) return null
+  const { email = '', password = '', hospital = '' } = value || {}
 
   return (
     <div className="modal-overlay">
       <div className="modal-card">
         <div className="side-header with-actions">
-          <span>Изменение машины</span>
+          <span>Новый сотрудник</span>
           <div className="actions">
             <button className="icon-btn success" title="Сохранить" onClick={onSave}><FaCheck /></button>
             <button className="icon-btn danger" title="Закрыть" onClick={onClose}><FaTimes /></button>
@@ -15,18 +16,16 @@ export default function EditCarPanel({ car, onChange, onSave, onClose }) {
         </div>
         <div className="modal-body">
           <div className="form-group">
-            <div className="label">Регистрационный номер</div>
-            <input className="field-input outline" value={car.regNumber || ''} onChange={(e)=>onChange({ ...car, regNumber: e.target.value })} />
+            <div className="label">Электронная почта</div>
+            <input className="field-input outline" value={email} onChange={(e)=>onChange({ ...value, email: e.target.value })} />
           </div>
-
           <div className="form-group">
-            <div className="label">GPS-трекер</div>
-            <input className="field-input outline" value={car.gpsNumber || ''} onChange={(e)=>onChange({ ...car, gpsNumber: e.target.value })} />
+            <div className="label">Пароль</div>
+            <input type="password" className="field-input outline" value={password} onChange={(e)=>onChange({ ...value, password: e.target.value })} />
           </div>
-
           <div className="form-group">
             <div className="label">Медицинская организация</div>
-            <input className="field-input outline" value={car.hospital || ''} onChange={(e)=>onChange({ ...car, hospital: e.target.value })} />
+            <input className="field-input outline" value={hospital} onChange={(e)=>onChange({ ...value, hospital: e.target.value })} />
           </div>
         </div>
       </div>

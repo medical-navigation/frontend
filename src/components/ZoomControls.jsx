@@ -7,8 +7,8 @@ export default function ZoomControls() {
 
   return (
     <div className="zoom-controls">
-      <button className="zoom-btn" data-action="in">+</button>
-      <button className="zoom-btn" data-action="out">-</button>
+      <button className="zoom-btn" data-action="in"><span className="zoom-symbol">+</span></button>
+      <button className="zoom-btn" data-action="out"><span className="zoom-symbol">-</span></button>
     </div>
   )
 }

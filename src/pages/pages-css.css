@@ -30,9 +30,12 @@
 }
 
 /* Map Page layout */
+.map-page { position: fixed; inset: 0; }
+/* Прячем контейнер атрибуции Leaflet, чтобы убрать логотипы/флаги в правом нижнем углу */
+.leaflet-control-attribution, .leaflet-control-container .leaflet-bottom.leaflet-right { display: none !important; }
 .map-page .map-root {
-  height: 100vh;
-  width: 100vw;
+  height: 100%;
+  width: 100%;
 }
 .floating {
   position: fixed;
@@ -53,8 +56,8 @@
   justify-content: center;
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   cursor: pointer;
-  font-size: 22px;
 }
+.fab-icon { font-size: 22px; line-height: 1; display: inline-block; }
 
 .zoom-controls {
   display: flex;
@@ -67,15 +70,19 @@
   border-radius: 8px;
   border: 1px solid #d1d5db;
   background: #fff;
-  font-size: 22px;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
+.zoom-symbol { font-size: 22px; line-height: 1; display: inline-block; }
 
 .side-panel {
   position: fixed;
   top: 0;
   bottom: 0;
   width: 340px;
+  max-width: calc(100vw - 24px);
   background: #fff;
   box-shadow: 0 0 20px rgba(0,0,0,0.12);
   z-index: 1100;
@@ -86,8 +93,14 @@
 .side-panel.left { left: 0; }
 .side-panel.right { right: 0; }
 .side-panel.overlay { z-index: 1200; box-shadow: 0 0 30px rgba(0,0,0,0.18); }
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 1300; display: flex; align-items: center; justify-content: center; padding: 16px; }
+.modal-card { width: 520px; max-width: 100%; background: #fff; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.25); }
+.modal-card .side-header { padding: 16px; margin: 0; border-bottom: 1px solid #f3f4f6; }
+.modal-card .modal-body { padding: 16px; }
 .side-header { font-weight: 600; margin-bottom: 12px; display:flex; align-items:center; justify-content: space-between; }
 .side-header.with-actions .actions .icon-btn { font-size: 18px; }
+.icon-btn.success { background: #10b981; color: #fff; border-radius: 8px; padding: 6px; }
+.icon-btn.danger { background: #ef4444; color: #fff; border-radius: 8px; padding: 6px; }
 
 .field {
   display: flex;
@@ -116,13 +129,14 @@
   width: 100%;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
+  box-sizing: border-box;
 }
 .form-group { margin-bottom: 12px; display: flex; flex-direction: column; gap: 6px; }
 .form-group .label { font-size: 13px; color: #374151; }
 
 .list { flex: 1; overflow: auto; margin-top: 8px; }
 .list-item { display: flex; align-items: center; gap: 10px; padding: 8px 6px; border-bottom: 1px solid #f3f4f6; }
-.list-item .icon-left { width: 32px; display: flex; justify-content: center; color: #111827; font-size: 18px; }
+.list-item .icon-left { width: 32px; min-width: 32px; display: flex; justify-content: center; align-items: center; color: #111827; font-size: 18px; }
 .icon-btn { background: transparent; border: none; cursor: pointer; color: #111827; font-size: 18px; }
 .list-item .list-body { flex: 1; }
 .car-title { font-weight: 600; }
@@ -142,7 +156,10 @@
 
 .divider { height: 1px; background: #e5e7eb; margin: 10px 0; }
 .user-row { display: flex; align-items: center; gap: 10px; }
+.user-row .icon-left { width: 42px; min-width: 32px; display:flex; justify-content:center; align-items:center; }
 .user-name { flex: 1; }
+.align-center .icon-left { align-items: center; }
+.spacer { flex: 1; }
 
 .two-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 12px; }
 .col { border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; }
