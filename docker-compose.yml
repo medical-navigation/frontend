@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  frontend:
+    build: ./frontend
+    ports:
+      - "4173:80"  # Фронт будет доступен на порту 4173
+    depends_on:
+      - backend
+
+  backend:
+    build: ./arm-navigation  # путь к папке бэкенда
+    ports:
+      - "5000:5000"  # Бэкенд останется на порту 5000
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    depends_on:
+      - postgres
+      - rabbitmq
+
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: armnavigation
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "15672:15672"  # Management UI
+
+volumes:
+  postgres_data:
