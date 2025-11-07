@@ -1,16 +1,32 @@
-# React + Vite
+Medical Navigation - Фронтенд
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Фронтенд приложения на React + Vite.
 
-Currently, two official plugins are available:
+Локальная разработка:
+npm install - установка зависимостей
+npm run dev - запуск dev сервера
+npm run build - сборка для продакшена
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Доступ:
+- Локально: http://localhost:5173
+- Продакшен: http://46.146.248.104:4173
 
-## React Compiler
+Docker:
+- Development: npm run dev (порт 5173)
+- Production: используется через deploy репозиторий (порт 4173)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+CI/CD: При пуше в main ветку автоматически деплоится на продакшен.
 
-## Expanding the ESLint configuration
+Важные файлы:
+Dockerfile - сборка для продакшена
+nginx.conf - конфигурация Nginx
+vite.config.js - конфигурация Vite с прокси к API
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Скрипты:
+npm run dev - dev сервер с hot-reload
+npm run build - сборка для продакшена
+npm run preview - превью собранного приложения
+
+Важно:
+- Не удалять Dockerfile и nginx.conf
+- После изменений проверять что npm run build работает
