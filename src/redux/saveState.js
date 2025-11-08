@@ -1,21 +1,30 @@
 export const saveState = (state) => {
-    try{
-        const serializedState = JSON.stringify(state);
+    try {
+        const stateToPersist = {
+            errorModal: state.errorModal
+        };
+        const serializedState = JSON.stringify(stateToPersist);
         localStorage.setItem('state', serializedState);
-    } catch(e){
-        console.error("Невозможно сохранить состояние", e);
+    } catch (e) {
+        console.error('Failed to save state', e);
     }
-}
+};
 
 export const loadState = () => {
-    try{
+    try {
         const serializedState = localStorage.getItem('state');
-        if(!serializedState){
+        if (!serializedState) {
             return undefined;
         }
-        return JSON.parse(serializedState);
-    }catch(e){
-        console.error("Невозможно загрузить состояние", e);
+        const parsed = JSON.parse(serializedState);
+        if (parsed && parsed.user) {
+            delete parsed.user;
+        }
+        return {
+            ...parsed
+        };
+    } catch (e) {
+        console.error('Failed to load state', e);
         return undefined;
     }
-}
+};

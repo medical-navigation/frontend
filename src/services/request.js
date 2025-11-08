@@ -1,3 +1,23 @@
+const rawBase = import.meta.env.VITE_BASE_URL || '';
+let baseOrigin = null;
+try {
+    baseOrigin = rawBase.startsWith('http') ? new URL(rawBase).origin : null;
+} catch {
+    baseOrigin = null;
+}
+
+const normalizeUrl = (url) => {
+    if (typeof window === 'undefined' || !baseOrigin) {
+        return { url, useCredentials: false };
+    }
+    const isLocalFrontend = window.location.hostname === 'localhost';
+    const isLocalBackend = baseOrigin === 'http://localhost:5000';
+    if (isLocalFrontend && isLocalBackend && url.startsWith(baseOrigin)) {
+        return { url: url.replace(baseOrigin, ''), useCredentials: true };
+    }
+    return { url, useCredentials: false };
+};
+
 export async function apiRequest(url, method = 'GET', body = null, auth = true) {
     try {
         const headers = {
@@ -6,29 +26,35 @@ export async function apiRequest(url, method = 'GET', body = null, auth = true) 
 
         if (auth) {
             const token = localStorage.getItem('token');
-            if (token) headers['Authorization'] = `Bearer ${token}`;
+            if (token) {
+                const hasScheme = /^bearer\s+/i.test(token) || /^token\s+/i.test(token);
+                headers['Authorization'] = hasScheme ? token : `Bearer ${token}`;
+            }
         }
 
-        const response = await fetch(url, {
+        const { url: requestUrl, useCredentials } = normalizeUrl(url);
+        const fetchOptions = {
             method,
             headers,
             body: body ? JSON.stringify(body) : null
-        });
+        };
+        if (useCredentials) {
+            fetchOptions.credentials = 'include';
+        }
+
+        const response = await fetch(requestUrl, fetchOptions);
 
         if (!response.ok) {
             const text = await response.text();
             throw new Error(text || response.statusText);
         }
 
-        // Сервер может вернуть 204 No Content — тогда тела нет
         if (response.status === 204) return null;
 
-        // Проверяем тип контента, чтобы корректно разобрать ответ
         const contentType = response.headers.get('content-type');
         if (contentType && contentType.includes('application/json')) {
             return await response.json();
         } else {
-            // Если это просто строка (например, токен)
             const text = await response.text();
             return { result: text };
         }
@@ -37,7 +63,7 @@ export async function apiRequest(url, method = 'GET', body = null, auth = true) 
         return {
             isSuccess: false,
             errorMessage: err.message,
-            errorCode: "500"
+            errorCode: '500'
         };
     }
 }

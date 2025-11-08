@@ -5,6 +5,53 @@ import { FaUser, FaLock } from 'react-icons/fa';
 import { loginUser } from '../services/authService.js';
 import { login_success, login_fail } from '../redux/reducers/user.js';
 
+const extractToken = (payload) => {
+    if (!payload) return null;
+
+    const normalize = (value) => {
+        if (typeof value !== 'string') return null;
+        const trimmed = value.trim().replace(/^"|"$/g, '');
+        return trimmed.length ? trimmed : null;
+    };
+
+    if (typeof payload === 'string') {
+        return normalize(payload);
+    }
+
+    const tokenCandidates = [
+        payload.token,
+        payload.accessToken,
+        payload.jwt,
+        payload.jwtToken,
+        payload?.data?.token,
+        payload?.data?.accessToken,
+        payload?.data?.jwt,
+        payload?.data?.jwtToken,
+        payload?.result?.token,
+        payload?.result?.accessToken,
+        payload?.result?.jwt,
+        payload?.result?.jwtToken,
+        payload.result,
+        payload.data
+    ];
+
+    for (const candidate of tokenCandidates) {
+        const normalized = normalize(candidate);
+        if (normalized) return normalized;
+    }
+
+    if (typeof payload?.result === 'object') {
+        const nested = extractToken(payload.result);
+        if (nested) return nested;
+    }
+    if (typeof payload?.data === 'object') {
+        const nested = extractToken(payload.data);
+        if (nested) return nested;
+    }
+
+    return null;
+};
+
 export default function LoginPage({ onLogin, region, backendVersion }) {
     const [login, setLogin] = useState('');
     const [password, setPassword] = useState('');
@@ -37,9 +84,11 @@ export default function LoginPage({ onLogin, region, backendVersion }) {
                 return;
             }
 
-            // Сохраняем токен, если он пришёл
-            if (result.token) {
-                localStorage.setItem('token', result.token);
+            const token = extractToken(result);
+            if (token) {
+                localStorage.setItem('token', token);
+            } else {
+                localStorage.removeItem('token');
             }
 
             const userPayload =
