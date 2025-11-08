@@ -20,10 +20,19 @@ export async function apiRequest(url, method = 'GET', body = null, auth = true) 
             throw new Error(text || response.statusText);
         }
 
-        // Если сервер вернул пустой ответ (204 No Content)
+        // Сервер может вернуть 204 No Content — тогда тела нет
         if (response.status === 204) return null;
 
-        return await response.json();
+        // Проверяем тип контента, чтобы корректно разобрать ответ
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            return await response.json();
+        } else {
+            // Если это просто строка (например, токен)
+            const text = await response.text();
+            return { result: text };
+        }
+
     } catch (err) {
         return {
             isSuccess: false,

@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
-import './pages-css.css'
-import { FaUser, FaLock, FaAmbulance, FaSearch, FaMapMarkerAlt, FaHospital, FaRegStickyNote } from 'react-icons/fa'
+import './pages-css.css';
+import { FaUser, FaLock } from 'react-icons/fa';
+import { loginUser } from '../services/authService.js';
 
-// Простая форма входа. Предполагается, что вы добавите реальный вызов API
-// и сохранение токена/пользователя в Redux позже.
 export default function LoginPage({ onLogin, region, backendVersion }) {
     const [login, setLogin] = useState('');
     const [password, setPassword] = useState('');
@@ -11,8 +10,8 @@ export default function LoginPage({ onLogin, region, backendVersion }) {
     const [error, setError] = useState('');
     const [frontendVersion, setFrontendVersion] = useState('v0.1');
 
+    // Загрузка версии фронтенда
     useEffect(() => {
-        // Пробуем получить версию фронтенда из public/frontend-version.json
         fetch('/frontend-version.json')
             .then((r) => r.json())
             .then((data) => {
@@ -27,18 +26,23 @@ export default function LoginPage({ onLogin, region, backendVersion }) {
         setLoading(true);
 
         try {
-            // ВРЕМЕННО: эмитация запроса. Замените на реальный сервис авторизации.
-            await new Promise((res) => setTimeout(res, 600));
+            const result = await loginUser(login, password);
 
-            // На этапе входа не определяем права и роли — только передаём введённый логин.
-            const authPayload = {
-                login,
-                token: 'mock-token'
-            };
+            if (!result || result.isSuccess === false) {
+                setError(result?.errorMessage || 'Неверный логин или пароль');
+                return;
+            }
 
-            if (onLogin) onLogin(authPayload);
-        } catch (e) {
-            setError('Не удалось выполнить вход. Попробуйте ещё раз.');
+            // Сохраняем токен
+            if (result.token) {
+                localStorage.setItem('token', result.token);
+            }
+
+            // Передаём данные в App
+            if (onLogin) onLogin(result);
+
+        } catch (err) {
+            setError('Не удалось подключиться к серверу. Попробуйте позже.');
         } finally {
             setLoading(false);
         }
@@ -46,7 +50,7 @@ export default function LoginPage({ onLogin, region, backendVersion }) {
 
     return (
         <div className="login-container">
-            {/* Верхний левый угол: край/область и версии */}
+            {/* Топбар с версиями */}
             <div className="login-topbar">
                 <div className="badge" id="region-badge">{region || 'Край/Область'}</div>
                 <div className="badge" id="backend-version">backend {backendVersion || 'v0.1'}</div>
@@ -56,9 +60,9 @@ export default function LoginPage({ onLogin, region, backendVersion }) {
             <form onSubmit={handleSubmit} className="login-form">
                 <h1 className="login-title">Навигационная панель</h1>
 
-                {/* Поле логина с иконкой */}
+                {/* Логин */}
                 <div className="input-row">
-                    <div className="input-icon" aria-hidden>
+                    <div className="input-icon" aria-hidden="true">
                         <FaUser />
                     </div>
                     <div className="input-field">
@@ -74,9 +78,9 @@ export default function LoginPage({ onLogin, region, backendVersion }) {
                     </div>
                 </div>
 
-                {/* Поле пароля с иконкой */}
+                {/* Пароль */}
                 <div className="input-row">
-                    <div className="input-icon" aria-hidden>
+                    <div className="input-icon" aria-hidden="true">
                         <FaLock />
                     </div>
                     <div className="input-field">
