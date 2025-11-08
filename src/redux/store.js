@@ -3,7 +3,6 @@ import errorModal from "./reducers/error";
 import {loadState, saveState} from "./saveState";
 import user from "./reducers/user";
 
-
 const preloadedState = loadState();
 
 export const store = configureStore({
