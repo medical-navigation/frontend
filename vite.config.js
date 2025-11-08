@@ -8,4 +8,12 @@ export default defineConfig({
         outDir: 'dist',      // куда складывать файлы сборки
         emptyOutDir: true,   // очищает dist перед новой сборкой
     },
+    server: {
+        proxy: {
+            '/api': {
+                target: 'http://localhost:5000',
+                changeOrigin: true
+            }
+        }
+    }
 })
