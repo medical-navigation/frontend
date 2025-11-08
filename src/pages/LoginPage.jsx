@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
+import { useDispatch } from 'react-redux';
 import './pages-css.css';
 import { FaUser, FaLock } from 'react-icons/fa';
 import { loginUser } from '../services/authService.js';
+import { login_success, login_fail } from '../redux/reducers/user.js';
 
 export default function LoginPage({ onLogin, region, backendVersion }) {
     const [login, setLogin] = useState('');
@@ -9,8 +11,9 @@ export default function LoginPage({ onLogin, region, backendVersion }) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [frontendVersion, setFrontendVersion] = useState('v0.1');
+    const dispatch = useDispatch();
 
-    // Загрузка версии фронтенда
+    // Загружаем версию фронтенда
     useEffect(() => {
         fetch('/frontend-version.json')
             .then((r) => r.json())
@@ -29,20 +32,33 @@ export default function LoginPage({ onLogin, region, backendVersion }) {
             const result = await loginUser(login, password);
 
             if (!result || result.isSuccess === false) {
+                dispatch(login_fail());
                 setError(result?.errorMessage || 'Неверный логин или пароль');
                 return;
             }
 
-            // Сохраняем токен
+            // Сохраняем токен, если он пришёл
             if (result.token) {
                 localStorage.setItem('token', result.token);
             }
 
-            // Передаём данные в App
+            const userPayload =
+                result?.user
+                || result?.data?.user
+                || {
+                    login: result?.login ?? result?.data?.login ?? login,
+                    hospitalName: result?.hospitalName ?? result?.data?.hospitalName ?? '',
+                    role: result?.role ?? result?.data?.role ?? 'user'
+                };
+
+            dispatch(login_success(userPayload));
+
+            // Передаём данные в App (если логика всё ещё нужна)
             if (onLogin) onLogin(result);
 
         } catch (err) {
-            setError('Не удалось подключиться к серверу. Попробуйте позже.');
+            dispatch(login_fail());
+            setError('Не удалось связаться с сервером. Попробуйте позже.');
         } finally {
             setLoading(false);
         }
@@ -50,15 +66,15 @@ export default function LoginPage({ onLogin, region, backendVersion }) {
 
     return (
         <div className="login-container">
-            {/* Топбар с версиями */}
+            {/* Бейджи в хедере */}
             <div className="login-topbar">
-                <div className="badge" id="region-badge">{region || 'Край/Область'}</div>
+                <div className="badge" id="region-badge">{region || 'Регион не указан'}</div>
                 <div className="badge" id="backend-version">backend {backendVersion || 'v0.1'}</div>
                 <div className="badge" id="frontend-version">frontend {frontendVersion}</div>
             </div>
 
             <form onSubmit={handleSubmit} className="login-form">
-                <h1 className="login-title">Навигационная панель</h1>
+                <h1 className="login-title">Административная панель</h1>
 
                 {/* Логин */}
                 <div className="input-row">
@@ -99,7 +115,7 @@ export default function LoginPage({ onLogin, region, backendVersion }) {
                 {error && <div className="login-error">{error}</div>}
 
                 <button type="submit" className="login-button" disabled={loading}>
-                    {loading ? 'Вход…' : 'Войти'}
+                    {loading ? 'Вход...' : 'Войти'}
                 </button>
             </form>
         </div>

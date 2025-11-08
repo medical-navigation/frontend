@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import 'leaflet/dist/leaflet.css';
 import './pages-css.css';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
@@ -18,6 +19,7 @@ import {
 import { getAllCars, createCar, updateCar } from '../services/carsService.js';
 import { getAllMedInstitutions, createMedInstitution } from '../services/medService.js';
 import { getAllUsers, createUser } from '../services/usersService.js';
+import { logout } from '../redux/reducers/user.js';
 
 // Иконка маркера
 import iconUrl from 'leaflet/dist/images/marker-icon.png';
@@ -42,7 +44,7 @@ function LeafletZoomBindings() {
     return null;
 }
 
-export default function MapPage({ regionBounds, regionCenter, user }) {
+export default function MapPage({ regionBounds, regionCenter }) {
     const [hospitals, setHospitals] = useState([]);
     const [ambulances, setAmbulances] = useState([]);
     const [showSearch, setShowSearch] = useState(false);
@@ -54,6 +56,8 @@ export default function MapPage({ regionBounds, regionCenter, user }) {
     const [newHospitalName, setNewHospitalName] = useState('');
     const [showAddUser, setShowAddUser] = useState(false);
     const [newUser, setNewUser] = useState({ email: '', password: '', hospital: '' });
+    const dispatch = useDispatch();
+    const { user: currentUser } = useSelector((state) => state.user);
 
     // Загрузка данных
     useEffect(() => {
@@ -107,7 +111,7 @@ export default function MapPage({ regionBounds, regionCenter, user }) {
     };
 
     const handleAddCarFromHospital = () => {
-        setEditCar({ regNumber: '', gpsNumber: '', hospital: newHospitalName || user?.hospitalName || '' });
+        setEditCar({ regNumber: '', gpsNumber: '', hospital: newHospitalName || currentUser?.hospitalName || '' });
     };
 
     const handleSaveHospital = async () => {
@@ -122,7 +126,7 @@ export default function MapPage({ regionBounds, regionCenter, user }) {
     };
 
     const handleAddUserClick = () => {
-        setNewUser({ email: '', password: '', hospital: newHospitalName || user?.hospitalName || '' });
+        setNewUser({ email: '', password: '', hospital: newHospitalName || currentUser?.hospitalName || '' });
         setShowAddUser(true);
     };
 
@@ -233,20 +237,20 @@ export default function MapPage({ regionBounds, regionCenter, user }) {
                     <div className="list-item align-center">
                         <div className="icon-left"><FaHospital /></div>
                         <div className="list-body">
-                            <div className="hospital-title">{user?.hospitalName || 'Моя организация'}</div>
+                            <div className="hospital-title">{currentUser?.hospitalName || 'Нет выбранного учреждения'}</div>
                         </div>
                     </div>
 
                     {/* Пользователь и выход */}
                     <div className="user-row align-center">
                         <div className="icon-left"><FaUser /></div>
-                        <div className="user-name">{user?.login || 'user'}</div>
+                        <div className="user-name">{currentUser?.login || 'user'}</div>
                         <button
                             className="icon-btn"
                             title="Выйти"
                             onClick={() => {
                                 localStorage.removeItem('token');
-                                window.location.assign('/login');
+                                dispatch(logout());
                             }}
                         >
                             <FaSignOutAlt />
