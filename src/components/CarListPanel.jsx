@@ -17,10 +17,11 @@ export default function CarListPanel({
   hospitalOptions = [],
   orgSearchValue,
   carSearchValue,
-  selectedHospital,
+  selectedHospitals = [],
   onOrgSearchChange,
   onCarSearchChange,
   onHospitalSelect,
+  onHospitalRemove,
   onClearFilter,
   onClose,
   onEditCar,
@@ -43,7 +44,7 @@ export default function CarListPanel({
         )
         .slice(0, 6)
     : []
-  const hasSelection = Boolean(selectedHospital)
+  const hasSelection = selectedHospitals.length > 0
 
   return (
     <aside className="side-panel left car-panel">
@@ -80,18 +81,29 @@ export default function CarListPanel({
         </div>
 
         {hasSelection && (
-          <div className="selected-filter">
-            <span className="checkbox checked">
-              <FaCheck size={12} />
-            </span>
-            <span>{selectedHospital.name}</span>
+          <div className="selected-filters">
+            {selectedHospitals.map((hospital) => (
+              <div className="selected-filter" key={hospital.id}>
+                <span className="checkbox checked">
+                  <FaCheck size={12} />
+                </span>
+                <span>{hospital.name}</span>
+                <button
+                  className="icon-btn"
+                  title="Убрать из фильтра"
+                  type="button"
+                  onClick={() => onHospitalRemove?.(hospital.id)}
+                >
+                  <FaTimes />
+                </button>
+              </div>
+            ))}
             <button
-              className="icon-btn"
-              title="Сбросить фильтр"
+              className="text-btn clear-filters"
               type="button"
               onClick={onClearFilter}
             >
-              <FaTimes />
+              Сбросить все
             </button>
           </div>
         )}
