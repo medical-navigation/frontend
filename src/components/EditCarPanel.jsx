@@ -3,10 +3,9 @@ import { FaTimes, FaCheck } from 'react-icons/fa'
 export default function EditCarPanel({ car, hospitalOptions = [], onChange, onSave, onClose }) {
   if (!car) return null
 
-  const fallbackId =
-    car.hospitalName
-      ? hospitalOptions.find((opt) => opt.name === car.hospitalName)?.id || ''
-      : ''
+  const fallbackId = car.hospitalName
+    ? hospitalOptions.find((opt) => opt.name === car.hospitalName)?.id || ''
+    : ''
   const selectedHospitalId = car.hospitalId || fallbackId || ''
 
   const handleHospitalChange = (e) => {
@@ -27,8 +26,12 @@ export default function EditCarPanel({ car, hospitalOptions = [], onChange, onSa
         <div className="side-header with-actions">
           <span>Редактирование машины</span>
           <div className="actions">
-            <button className="icon-btn success" title="Сохранить" onClick={onSave}><FaCheck /></button>
-            <button className="icon-btn danger" title="Закрыть" onClick={onClose}><FaTimes /></button>
+            <button className="icon-btn success" title="Сохранить" type="button" onClick={onSave}>
+              <FaCheck />
+            </button>
+            <button className="icon-btn danger" title="Закрыть" type="button" onClick={onClose}>
+              <FaTimes />
+            </button>
           </div>
         </div>
         <div className="modal-body">
@@ -75,4 +78,3 @@ export default function EditCarPanel({ car, hospitalOptions = [], onChange, onSa
     </div>
   )
 }
-

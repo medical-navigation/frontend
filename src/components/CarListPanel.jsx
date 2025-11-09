@@ -7,16 +7,19 @@ import {
   FaUnlink,
   FaUser,
   FaHospital,
-  FaSignOutAlt
-} from 'react-icons/fa';
+  FaSignOutAlt,
+  FaCheck
+} from 'react-icons/fa'
 
 export default function CarListPanel({
   open,
   cars = [],
   hospitalOptions = [],
-  filterQuery,
+  orgSearchValue,
+  carSearchValue,
   selectedHospital,
-  onFilterQueryChange,
+  onOrgSearchChange,
+  onCarSearchChange,
   onHospitalSelect,
   onClearFilter,
   onClose,
@@ -28,46 +31,46 @@ export default function CarListPanel({
   currentUserName,
   onLogout
 }) {
-  if (!open) return null;
+  if (!open) return null
 
-  // Фильтрация подсказок по введённому тексту
-  const suggestions = filterQuery.trim()
+  const orgValue = orgSearchValue ?? ''
+  const carValue = carSearchValue ?? ''
+  const trimmed = orgValue.trim()
+  const suggestions = trimmed
     ? hospitalOptions
         .filter((opt) =>
-          opt.name.toLowerCase().includes(filterQuery.trim().toLowerCase())
+          opt.name.toLowerCase().includes(trimmed.toLowerCase())
         )
         .slice(0, 6)
-    : [];
+    : []
+  const hasSelection = Boolean(selectedHospital)
 
   return (
     <aside className="side-panel left car-panel">
-      {/* Заголовок */}
       <div className="side-header with-actions">
         <span>Машины</span>
         <div className="actions">
-          <button className="text-btn" onClick={onClose}>
-            Скрыть
-          </button>
+          <button className="text-btn" onClick={onClose}>Закрыть</button>
         </div>
       </div>
 
-      {/* Поиск и фильтр */}
       <div className="panel-fields">
+        <span className="field-label">Фильтр по медорганизации</span>
         <div className="field typeahead">
           <input
             className="field-input"
-            placeholder="Поиск медорганизации"
-            value={filterQuery}
-            onChange={(e) => onFilterQueryChange(e.target.value)}
+            placeholder="Начните вводить название больницы"
+            value={orgValue}
+            onChange={(e) => onOrgSearchChange?.(e.target.value)}
           />
-          {filterQuery && suggestions.length > 0 && (
+          {trimmed && suggestions.length > 0 && (
             <div className="suggestions-list">
               {suggestions.map((option) => (
                 <button
                   key={option.id}
                   className="suggestion"
                   type="button"
-                  onClick={() => onHospitalSelect(option)}
+                  onClick={() => onHospitalSelect?.(option)}
                 >
                   {option.name}
                 </button>
@@ -76,96 +79,109 @@ export default function CarListPanel({
           )}
         </div>
 
-        {/* Выбранный фильтр */}
-        {selectedHospital && (
+        {hasSelection && (
           <div className="selected-filter">
-            <span className="checkbox checked"></span>
+            <span className="checkbox checked">
+              <FaCheck size={12} />
+            </span>
             <span>{selectedHospital.name}</span>
-            <button className="icon-btn" title="Сбросить" onClick={onClearFilter}>
+            <button
+              className="icon-btn"
+              title="Сбросить фильтр"
+              type="button"
+              onClick={onClearFilter}
+            >
               <FaTimes />
             </button>
           </div>
         )}
+
+        <span className="field-label">Поиск машины по номеру</span>
+        <div className="field">
+          <input
+            className="field-input"
+            placeholder="Например, А123БВ"
+            value={carValue}
+            onChange={(e) => onCarSearchChange?.(e.target.value)}
+          />
+        </div>
       </div>
 
-      {/* Список машин */}
       <div className="car-list">
-        {cars.length === 0 ? (
+        {cars.length === 0 && (
           <div className="empty-placeholder">Нет машин для отображения</div>
-        ) : (
-          cars.map((car) => (
-            <div className="car-row" key={car.carId || car.id || car.regNum}>
-              <div className="car-icon">
-                <FaMapMarkerAlt />
-              </div>
-              <div className="car-info">
-                <div className="car-regnum">{car.regNum || 'Без номера'}</div>
-                <div className="car-gpslabel">
-                  {car.gpsTracker ? `GPS: ${car.gpsTracker}` : 'GPS не подключен'}
-                </div>
-              </div>
-              <div className="row-actions">
-                {car.gpsTracker ? (
-                  <button
-                    className="icon-btn"
-                    title="Отвязать трекер"
-                    onClick={() => onUnbindTracker(car)}
-                  >
-                    <FaUnlink />
-                  </button>
-                ) : (
-                  <button
-                    className="icon-btn"
-                    title="Привязать трекер"
-                    onClick={() => onBindTracker(car)}
-                  >
-                    <FaLink />
-                  </button>
-                )}
-                <button
-                  className="icon-btn"
-                  title="Редактировать"
-                  onClick={() => onEditCar(car)}
-                >
-                  <FaEdit />
-                </button>
-                <button
-                  className="icon-btn danger"
-                  title="Удалить"
-                  onClick={() => onDeleteCar(car)}
-                >
-                  <FaTrash />
-                </button>
+        )}
+        {cars.map((car) => (
+          <div className="car-row" key={car.carId || car.id || car.regNum}>
+            <div className="car-icon">
+              <FaMapMarkerAlt />
+            </div>
+            <div className="car-info">
+              <div className="car-regnum">{car.regNum || 'Без номера'}</div>
+              <div className="car-gpslabel">
+                {car.gpsTracker ? `GPS: ${car.gpsTracker}` : 'GPS не привязан'}
               </div>
             </div>
-          ))
-        )}
+            <div className="row-actions">
+              {car.gpsTracker ? (
+                <button
+                  className="icon-btn"
+                  title="Отвязать трекер"
+                  type="button"
+                  onClick={() => onUnbindTracker?.(car)}
+                >
+                  <FaUnlink />
+                </button>
+              ) : (
+                <button
+                  className="icon-btn"
+                  title="Привязать трекер"
+                  type="button"
+                  onClick={() => onBindTracker?.(car)}
+                >
+                  <FaLink />
+                </button>
+              )}
+              <button
+                className="icon-btn"
+                title="Редактировать"
+                type="button"
+                onClick={() => onEditCar?.(car)}
+              >
+                <FaEdit />
+              </button>
+              <button
+                className="icon-btn danger"
+                title="Удалить"
+                type="button"
+                onClick={() => onDeleteCar?.(car)}
+              >
+                <FaTrash />
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
 
-      {/* Футер: пользователь, организация, выход */}
       <div className="panel-footer">
         <div className="panel-footer-info meta-block">
           <div className="meta-row">
             <div className="meta-icon">
               <FaUser />
             </div>
-            <div className="meta-text">
-              {currentUserName || 'Неизвестный пользователь'}
-            </div>
+            <div className="meta-text">{currentUserName || 'Нет пользователя'}</div>
           </div>
           <div className="meta-row">
             <div className="meta-icon">
               <FaHospital />
             </div>
-            <div className="meta-text">
-              {currentHospitalName || 'Нет организации'}
-            </div>
+            <div className="meta-text">{currentHospitalName || 'Нет организации'}</div>
           </div>
         </div>
-        <button className="icon-btn" title="Выйти" onClick={onLogout}>
+        <button className="icon-btn" title="Выйти" type="button" onClick={onLogout}>
           <FaSignOutAlt />
         </button>
       </div>
     </aside>
-  );
+  )
 }

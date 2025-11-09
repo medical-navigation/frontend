@@ -60,6 +60,25 @@ const generateId = () => (typeof crypto !== 'undefined' && crypto.randomUUID
     ? crypto.randomUUID()
     : Math.random().toString(36).slice(2));
 
+const hashString = (value) => {
+    let hash = 0;
+    const str = value || '';
+    for (let i = 0; i < str.length; i += 1) {
+        hash = (hash * 31 + str.charCodeAt(i)) >>> 0;
+    }
+    return hash;
+};
+
+const getCarPosition = (carData) => {
+    const seedSource = (carData?.carId || carData?.id || carData?.regNum || generateId()).toString();
+    const hash = hashString(seedSource);
+    const baseLat = 58.0;
+    const baseLng = 56.2;
+    const lat = baseLat + ((hash % 1000) / 10000);      // 58.0000 – 58.0999
+    const lng = baseLng + (((hash >> 5) % 1000) / 10000); // 56.2000 – 56.2999
+    return [lat, lng];
+};
+
 const buildHospitalOptions = (items = []) => {
     return (items || [])
         .map((h) => {
@@ -119,7 +138,8 @@ const normalizeCarWithHospitals = (carData, hospitalOptions = []) => {
         hospital: hospitalLabel,
         hospitalName: hospitalLabel,
         hospitalId,
-        medInstitutionId: hospitalId || (rawHospitalId ? String(rawHospitalId) : '')
+        medInstitutionId: hospitalId || (rawHospitalId ? String(rawHospitalId) : ''),
+        position: carData.position || getCarPosition(carData)
     };
 };
 
@@ -165,7 +185,8 @@ export default function MapPage({ regionBounds, regionCenter }) {
     const [users, setUsers] = useState([]);
     const [showCarPanel, setShowCarPanel] = useState(false);
     const [showHospitalPanel, setShowHospitalPanel] = useState(false);
-    const [filterQuery, setFilterQuery] = useState('');
+    const [orgSearchValue, setOrgSearchValue] = useState('');
+    const [carSearchValue, setCarSearchValue] = useState('');
     const [selectedHospitalFilter, setSelectedHospitalFilter] = useState(null);
     const [editCar, setEditCar] = useState(null);
     const [showAddHospital, setShowAddHospital] = useState(false);
@@ -189,18 +210,22 @@ export default function MapPage({ regionBounds, regionCenter }) {
     );
 
     const filteredCars = useMemo(() => {
-        const base = selectedHospitalFilter
+        let list = selectedHospitalFilter
             ? cars.filter(car => (car.medInstitutionId || car.hospitalId) === selectedHospitalFilter.id)
             : cars;
-        if (!filterQuery.trim() || selectedHospitalFilter) return base;
-        const q = filterQuery.trim().toLowerCase();
-        return base.filter(car => (car.hospitalName || '').toLowerCase().includes(q));
-    }, [cars, selectedHospitalFilter, filterQuery]);
+
+        if (carSearchValue.trim()) {
+            const q = carSearchValue.trim().toLowerCase();
+            list = list.filter(car => (car.regNum || '').toLowerCase().includes(q));
+        }
+
+        return list;
+    }, [cars, selectedHospitalFilter, carSearchValue]);
 
     const carsByHospital = useMemo(() => {
         const map = {};
         cars.forEach((car) => {
-            const id = car.medInstitutionId || car.hospitalId || 'none';
+            const id = String(car.medInstitutionId || car.hospitalId || 'none');
             if (!map[id]) map[id] = [];
             map[id].push(car);
         });
@@ -210,7 +235,7 @@ export default function MapPage({ regionBounds, regionCenter }) {
     const usersByHospital = useMemo(() => {
         const map = {};
         users.forEach((user) => {
-            const id = user.medInstitutionId || user.hospitalId || 'none';
+            const id = String(user.medInstitutionId || user.hospitalId || 'none');
             if (!map[id]) map[id] = [];
             map[id].push(user);
         });
@@ -279,13 +304,14 @@ export default function MapPage({ regionBounds, regionCenter }) {
     }, [dispatch]);
 
     const handleHospitalFilterSelect = (option) => {
+        if (!option) return;
         setSelectedHospitalFilter(option);
-        setFilterQuery(option.name);
+        setOrgSearchValue('');
     };
 
     const clearHospitalFilter = () => {
         setSelectedHospitalFilter(null);
-        setFilterQuery('');
+        setOrgSearchValue('');
     };
 
     const pickDefaultHospital = useCallback((preferredName) => {
@@ -351,7 +377,9 @@ export default function MapPage({ regionBounds, regionCenter }) {
         }
 
         const savedCar = mapCarForUi(result?.data || { ...editCar, ...payload });
-        if (savedCar) {
+        if (!carIdentifier) {
+            await loadInitialData();
+        } else if (savedCar) {
             setCars(prev => {
                 const rest = prev.filter(car => (car.carId || car.id) !== (savedCar.carId || savedCar.id));
                 return [...rest, savedCar];
@@ -451,7 +479,7 @@ export default function MapPage({ regionBounds, regionCenter }) {
         setUsers(prev => prev.filter(user => (user.medInstitutionId || user.hospitalId) !== hospital.id));
         if (selectedHospitalFilter?.id === hospital.id) {
             setSelectedHospitalFilter(null);
-            setFilterQuery('');
+            setOrgSearchValue('');
         }
         if (expandedHospitalId === hospital.id) {
             setExpandedHospitalId(null);
@@ -586,7 +614,7 @@ export default function MapPage({ regionBounds, regionCenter }) {
                 <LeafletZoomBindings />
 
                 {filteredCars.map(car => (
-                    <Marker key={car.carId || car.id || car.regNum} position={car.position || [0, 0]}>
+                    <Marker key={car.carId || car.id || car.regNum} position={car.position || [58.01, 56.23]}>
                         <Popup>
                             <div className="car-popup">
                                 <div className="car-reg">{car.regNum || 'Без номера'}</div>
@@ -611,9 +639,11 @@ export default function MapPage({ regionBounds, regionCenter }) {
                 open={showCarPanel}
                 cars={filteredCars}
                 hospitalOptions={hospitalOptions}
-                filterQuery={filterQuery}
+                orgSearchValue={orgSearchValue}
+                carSearchValue={carSearchValue}
                 selectedHospital={selectedHospitalFilter}
-                onFilterQueryChange={setFilterQuery}
+                onOrgSearchChange={setOrgSearchValue}
+                onCarSearchChange={setCarSearchValue}
                 onHospitalSelect={handleHospitalFilterSelect}
                 onClearFilter={clearHospitalFilter}
                 onClose={() => setShowCarPanel(false)}
@@ -676,3 +706,5 @@ export default function MapPage({ regionBounds, regionCenter }) {
         </div>
     );
 }
+
+

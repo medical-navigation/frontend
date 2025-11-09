@@ -32,10 +32,14 @@ export default function AddUserModal({ open, value, hospitalOptions = [], onChan
     <div className="modal-overlay">
       <div className="modal-card">
         <div className="side-header with-actions">
-          <span>Добавить сотрудника</span>
+          <span>Новый сотрудник</span>
           <div className="actions">
-            <button className="icon-btn success" title="Сохранить" onClick={onSave}><FaCheck /></button>
-            <button className="icon-btn danger" title="Закрыть" onClick={onClose}><FaTimes /></button>
+            <button className="icon-btn success" title="Сохранить" type="button" onClick={onSave}>
+              <FaCheck />
+            </button>
+            <button className="icon-btn danger" title="Закрыть" type="button" onClick={onClose}>
+              <FaTimes />
+            </button>
           </div>
         </div>
         <div className="modal-body">
@@ -91,4 +95,3 @@ export default function AddUserModal({ open, value, hospitalOptions = [], onChan
     </div>
   )
 }
-
