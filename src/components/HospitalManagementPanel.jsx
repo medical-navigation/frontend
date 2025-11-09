@@ -17,6 +17,7 @@ export default function HospitalManagementPanel({
   usersByHospital = {},
   expandedHospitalId,
   hideAddHospitalButton = false,
+  readOnly = false,
   onToggleHospital,
   onAddHospital,
   onEditHospital,
@@ -44,43 +45,45 @@ export default function HospitalManagementPanel({
           {car.gpsTracker ? `GPS: ${car.gpsTracker}` : 'GPS не привязан'}
         </div>
       </div>
-      <div className="row-actions">
-        {car.gpsTracker ? (
+      {!readOnly && (
+        <div className="row-actions">
+          {car.gpsTracker ? (
+            <button
+              className="icon-btn"
+              type="button"
+              title="Отвязать трекер"
+              onClick={() => onUnbindTracker?.(car)}
+            >
+              <FaUnlink />
+            </button>
+          ) : (
+            <button
+              className="icon-btn"
+              type="button"
+              title="Привязать трекер"
+              onClick={() => onBindTracker?.(car)}
+            >
+              <FaLink />
+            </button>
+          )}
           <button
             className="icon-btn"
             type="button"
-            title="Отвязать трекер"
-            onClick={() => onUnbindTracker?.(car)}
+            title="Редактировать"
+            onClick={() => onEditCar?.(car)}
           >
-            <FaUnlink />
+            <FaEdit />
           </button>
-        ) : (
           <button
-            className="icon-btn"
+            className="icon-btn danger"
             type="button"
-            title="Привязать трекер"
-            onClick={() => onBindTracker?.(car)}
+            title="Удалить"
+            onClick={() => onDeleteCar?.(car)}
           >
-            <FaLink />
+            <FaTrash />
           </button>
-        )}
-        <button
-          className="icon-btn"
-          type="button"
-          title="Редактировать"
-          onClick={() => onEditCar?.(car)}
-        >
-          <FaEdit />
-        </button>
-        <button
-          className="icon-btn danger"
-          type="button"
-          title="Удалить"
-          onClick={() => onDeleteCar?.(car)}
-        >
-          <FaTrash />
-        </button>
-      </div>
+        </div>
+      )}
     </div>
   )
 
@@ -93,24 +96,26 @@ export default function HospitalManagementPanel({
         <div className="user-name-strong">{user.login}</div>
         <div className="user-hospital">{user.hospitalName || 'Без организации'}</div>
       </div>
-      <div className="row-actions">
-        <button
-          className="icon-btn"
-          type="button"
-          title="Редактировать"
-          onClick={() => onEditUser?.(user)}
-        >
-          <FaEdit />
-        </button>
-        <button
-          className="icon-btn danger"
-          type="button"
-          title="Удалить"
-          onClick={() => onDeleteUser?.(user)}
-        >
-          <FaTrash />
-        </button>
-      </div>
+      {!readOnly && (
+        <div className="row-actions">
+          <button
+            className="icon-btn"
+            type="button"
+            title="Редактировать"
+            onClick={() => onEditUser?.(user)}
+          >
+            <FaEdit />
+          </button>
+          <button
+            className="icon-btn danger"
+            type="button"
+            title="Удалить"
+            onClick={() => onDeleteUser?.(user)}
+          >
+            <FaTrash />
+          </button>
+        </div>
+      )}
     </div>
   )
 
@@ -124,7 +129,7 @@ export default function HospitalManagementPanel({
       </div>
 
       {/* Кнопка добавления медорганизации скрыта для локальных администраторов */}
-      {!hideAddHospitalButton && (
+      {!hideAddHospitalButton && !readOnly && (
         <div className="panel-actions stretch">
           <button className="add-btn" type="button" onClick={onAddHospital}>
             <FaHospital /> <span>Добавить медорганизацию</span>
@@ -158,22 +163,26 @@ export default function HospitalManagementPanel({
                   >
                     {isExpanded ? <FaChevronDown /> : <FaChevronRight />}
                   </button>
-                  <button
-                    className="icon-btn"
-                    type="button"
-                    title="Редактировать"
-                    onClick={() => onEditHospital?.(hospital)}
-                  >
-                    <FaEdit />
-                  </button>
-                  <button
-                    className="icon-btn danger"
-                    type="button"
-                    title="Удалить"
-                    onClick={() => onDeleteHospital?.(hospital)}
-                  >
-                    <FaTrash />
-                  </button>
+                  {!readOnly && (
+                    <>
+                      <button
+                        className="icon-btn"
+                        type="button"
+                        title="Редактировать"
+                        onClick={() => onEditHospital?.(hospital)}
+                      >
+                        <FaEdit />
+                      </button>
+                      <button
+                        className="icon-btn danger"
+                        type="button"
+                        title="Удалить"
+                        onClick={() => onDeleteHospital?.(hospital)}
+                      >
+                        <FaTrash />
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -182,13 +191,15 @@ export default function HospitalManagementPanel({
                   <div className="detail-section">
                     <div className="section-header">
                       <div className="section-title">Машины</div>
-                      <button
-                        className="text-btn"
-                        type="button"
-                        onClick={() => onAddCar?.(hospital)}
-                      >
-                        + Добавить
-                      </button>
+                      {!readOnly && (
+                        <button
+                          className="text-btn"
+                          type="button"
+                          onClick={() => onAddCar?.(hospital)}
+                        >
+                          + Добавить
+                        </button>
+                      )}
                     </div>
                     {cars.length === 0 ? (
                       <div className="empty-placeholder">Нет машин</div>
@@ -199,13 +210,15 @@ export default function HospitalManagementPanel({
                   <div className="detail-section">
                     <div className="section-header">
                       <div className="section-title">Сотрудники</div>
-                      <button
-                        className="text-btn"
-                        type="button"
-                        onClick={() => onAddUser?.(hospital)}
-                      >
-                        + Добавить
-                      </button>
+                      {!readOnly && (
+                        <button
+                          className="text-btn"
+                          type="button"
+                          onClick={() => onAddUser?.(hospital)}
+                        >
+                          + Добавить
+                        </button>
+                      )}
                     </div>
                     {staff.length === 0 ? (
                       <div className="empty-placeholder">Нет сотрудников</div>

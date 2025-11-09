@@ -19,6 +19,7 @@ export default function CarListPanel({
   carSearchValue,
   selectedHospitals = [],
   hideHospitalFilter = false,
+  readOnly = false,
   onOrgSearchChange,
   onCarSearchChange,
   onHospitalSelect,
@@ -140,43 +141,45 @@ export default function CarListPanel({
                 {car.gpsTracker ? `GPS: ${car.gpsTracker}` : 'GPS не привязан'}
               </div>
             </div>
-            <div className="row-actions">
-              {car.gpsTracker ? (
+            {!readOnly && (
+              <div className="row-actions">
+                {car.gpsTracker ? (
+                  <button
+                    className="icon-btn"
+                    title="Отвязать трекер"
+                    type="button"
+                    onClick={() => onUnbindTracker?.(car)}
+                  >
+                    <FaUnlink />
+                  </button>
+                ) : (
+                  <button
+                    className="icon-btn"
+                    title="Привязать трекер"
+                    type="button"
+                    onClick={() => onBindTracker?.(car)}
+                  >
+                    <FaLink />
+                  </button>
+                )}
                 <button
                   className="icon-btn"
-                  title="Отвязать трекер"
+                  title="Редактировать"
                   type="button"
-                  onClick={() => onUnbindTracker?.(car)}
+                  onClick={() => onEditCar?.(car)}
                 >
-                  <FaUnlink />
+                  <FaEdit />
                 </button>
-              ) : (
                 <button
-                  className="icon-btn"
-                  title="Привязать трекер"
+                  className="icon-btn danger"
+                  title="Удалить"
                   type="button"
-                  onClick={() => onBindTracker?.(car)}
+                  onClick={() => onDeleteCar?.(car)}
                 >
-                  <FaLink />
+                  <FaTrash />
                 </button>
-              )}
-              <button
-                className="icon-btn"
-                title="Редактировать"
-                type="button"
-                onClick={() => onEditCar?.(car)}
-              >
-                <FaEdit />
-              </button>
-              <button
-                className="icon-btn danger"
-                title="Удалить"
-                type="button"
-                onClick={() => onDeleteCar?.(car)}
-              >
-                <FaTrash />
-              </button>
-            </div>
+              </div>
+            )}
           </div>
         ))}
       </div>

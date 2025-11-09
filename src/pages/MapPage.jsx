@@ -275,6 +275,26 @@ export default function MapPage({ regionBounds, regionCenter }) {
         [hospitalOptions]
     );
 
+    const derivedRole = useMemo(() => {
+        const sources = [
+            currentUser?.role,
+            matchedUserRecord?.role,
+            currentUser?.userRole,
+            matchedUserRecord?.userRole
+        ];
+        for (const value of sources) {
+            if (value === null || value === undefined) continue;
+            if (typeof value === 'number') return value;
+            const parsed = Number(value);
+            if (!Number.isNaN(parsed)) return parsed;
+            const lower = String(value).toLowerCase();
+            if (lower === 'admin') return 1;
+            if (lower === 'user') return 0;
+        }
+        return 0;
+    }, [currentUser, matchedUserRecord]);
+    const isReadOnlyUser = derivedRole === 0;
+
     const filteredCars = useMemo(() => {
         const activeHospitalIds = isSingleHospitalMode
             ? (limitedHospitalId ? [limitedHospitalId] : [])
@@ -726,6 +746,7 @@ export default function MapPage({ regionBounds, regionCenter }) {
                 carSearchValue={carSearchValue}
                 selectedHospitals={isSingleHospitalMode ? [] : selectedHospitalFilters}
                 hideHospitalFilter={isSingleHospitalMode}
+                readOnly={isReadOnlyUser}
                 onOrgSearchChange={setOrgSearchValue}
                 onCarSearchChange={setCarSearchValue}
                 onHospitalSelect={handleHospitalFilterSelect}
@@ -748,6 +769,7 @@ export default function MapPage({ regionBounds, regionCenter }) {
                 usersByHospital={usersByHospital}
                 expandedHospitalId={expandedHospitalId}
                 hideAddHospitalButton={isSingleHospitalMode}
+                readOnly={isReadOnlyUser}
                 onToggleHospital={toggleHospitalExpansion}
                 onAddHospital={() => openHospitalModal()}
                 onEditHospital={openHospitalModal}
@@ -763,32 +785,36 @@ export default function MapPage({ regionBounds, regionCenter }) {
                 onClose={() => setShowHospitalPanel(false)}
             />
 
-            <EditCarPanel
-                car={editCar}
-                hospitalOptions={isSingleHospitalMode ? visibleHospitals : hospitalOptions}
-                onChange={setEditCar}
-                onSave={handleSaveCar}
-                onClose={() => setEditCar(null)}
-            />
+            {!isReadOnlyUser && (
+                <>
+                    <EditCarPanel
+                        car={editCar}
+                        hospitalOptions={isSingleHospitalMode ? visibleHospitals : hospitalOptions}
+                        onChange={setEditCar}
+                        onSave={handleSaveCar}
+                        onClose={() => setEditCar(null)}
+                    />
 
-            <AddHospitalPanel
-                open={showAddHospital}
-                value={newHospitalName}
-                onChange={setNewHospitalName}
-                onAddCar={() => handleAddCarFromHospital()}
-                onAddUser={handleAddUserClick}
-                onSave={handleSaveHospital}
-                onClose={closeHospitalModal}
-            />
+                    <AddHospitalPanel
+                        open={showAddHospital}
+                        value={newHospitalName}
+                        onChange={setNewHospitalName}
+                        onAddCar={() => handleAddCarFromHospital()}
+                        onAddUser={handleAddUserClick}
+                        onSave={handleSaveHospital}
+                        onClose={closeHospitalModal}
+                    />
 
-            <AddUserModal
-                open={showAddUser}
-                value={newUser}
-                hospitalOptions={isSingleHospitalMode ? visibleHospitals : hospitalOptions}
-                onChange={setNewUser}
-                onSave={handleSaveUser}
-                onClose={closeUserModal}
-            />
+                    <AddUserModal
+                        open={showAddUser}
+                        value={newUser}
+                        hospitalOptions={isSingleHospitalMode ? visibleHospitals : hospitalOptions}
+                        onChange={setNewUser}
+                        onSave={handleSaveUser}
+                        onClose={closeUserModal}
+                    />
+                </>
+            )}
         </div>
     );
 }
