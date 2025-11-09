@@ -28,3 +28,11 @@ export async function updateCar(id, data) {
 export async function deleteCar(id) {
     return apiRequest(BASE + import.meta.env.VITE_CARS_DELETE + id, 'DELETE');
 }
+
+export async function bindTracker(id, tracker) {
+    return apiRequest(BASE + import.meta.env.VITE_CARS_BIND_TRACKER + id, 'POST', { tracker });
+}
+
+export async function unbindTracker(id) {
+    return apiRequest(BASE + import.meta.env.VITE_CARS_UNBIND_TRACKER + id, 'POST');
+}
