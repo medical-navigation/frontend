@@ -52,6 +52,46 @@ const extractToken = (payload) => {
     return null;
 };
 
+const normalizeUserFromResponse = (payload, fallbackLogin) => {
+    const candidates = [
+        payload?.user,
+        payload?.data?.user,
+        payload?.result?.user,
+        payload?.data,
+        payload?.result,
+        payload
+    ];
+
+    const source = candidates.find(item => item && typeof item === 'object') || {};
+    const hospitalCandidate = source.hospital || source.medInstitution || source.organization || null;
+    const hospitalCandidateName = typeof hospitalCandidate === 'string'
+        ? hospitalCandidate
+        : hospitalCandidate?.name ?? hospitalCandidate?.title ?? hospitalCandidate?.organizationName ?? '';
+    const hospitalId =
+        source.medInstitutionId ??
+        source.medInstitutionID ??
+        source.medInstitution?.id ??
+        source.hospitalId ??
+        source.hospitalID ??
+        (typeof hospitalCandidate === 'object' ? (hospitalCandidate?.id ?? hospitalCandidate?.medInstitutionId) : undefined) ??
+        null;
+    const hospitalName =
+        source.hospitalName ??
+        source.medInstitutionName ??
+        source.medInstitutionTitle ??
+        hospitalCandidateName ??
+        '';
+
+    return {
+        ...source,
+        login: source.login ?? source.userName ?? source.username ?? fallbackLogin,
+        hospitalName: hospitalName || '',
+        medInstitutionId: hospitalId ? String(hospitalId) : '',
+        hospitalId: hospitalId ? String(hospitalId) : (source.hospitalId ? String(source.hospitalId) : ''),
+        role: source.role ?? source.userRole ?? 'user'
+    };
+};
+
 export default function LoginPage({ onLogin, region, backendVersion }) {
     const [login, setLogin] = useState('');
     const [password, setPassword] = useState('');
@@ -91,14 +131,7 @@ export default function LoginPage({ onLogin, region, backendVersion }) {
                 localStorage.removeItem('token');
             }
 
-            const userPayload =
-                result?.user
-                || result?.data?.user
-                || {
-                    login: result?.login ?? result?.data?.login ?? login,
-                    hospitalName: result?.hospitalName ?? result?.data?.hospitalName ?? '',
-                    role: result?.role ?? result?.data?.role ?? 'user'
-                };
+            const userPayload = normalizeUserFromResponse(result, login);
 
             dispatch(login_success(userPayload));
 

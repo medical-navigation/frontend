@@ -16,6 +16,7 @@ export default function HospitalManagementPanel({
   carsByHospital = {},
   usersByHospital = {},
   expandedHospitalId,
+  hideAddHospitalButton = false,
   onToggleHospital,
   onAddHospital,
   onEditHospital,
@@ -122,11 +123,14 @@ export default function HospitalManagementPanel({
         </div>
       </div>
 
-      <div className="panel-actions stretch">
-        <button className="add-btn" type="button" onClick={onAddHospital}>
-          <FaHospital /> <span>Добавить медорганизацию</span>
-        </button>
-      </div>
+      {/* Кнопка добавления медорганизации скрыта для локальных администраторов */}
+      {!hideAddHospitalButton && (
+        <div className="panel-actions stretch">
+          <button className="add-btn" type="button" onClick={onAddHospital}>
+            <FaHospital /> <span>Добавить медорганизацию</span>
+          </button>
+        </div>
+      )}
 
       <div className="hospital-list grow">
         {hospitals.length === 0 && (

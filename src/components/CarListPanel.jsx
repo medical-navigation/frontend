@@ -18,6 +18,7 @@ export default function CarListPanel({
   orgSearchValue,
   carSearchValue,
   selectedHospitals = [],
+  hideHospitalFilter = false,
   onOrgSearchChange,
   onCarSearchChange,
   onHospitalSelect,
@@ -56,56 +57,61 @@ export default function CarListPanel({
       </div>
 
       <div className="panel-fields">
-        <span className="field-label">Фильтр по медорганизации</span>
-        <div className="field typeahead">
-          <input
-            className="field-input"
-            placeholder="Начните вводить название больницы"
-            value={orgValue}
-            onChange={(e) => onOrgSearchChange?.(e.target.value)}
-          />
-          {trimmed && suggestions.length > 0 && (
-            <div className="suggestions-list">
-              {suggestions.map((option) => (
-                <button
-                  key={option.id}
-                  className="suggestion"
-                  type="button"
-                  onClick={() => onHospitalSelect?.(option)}
-                >
-                  {option.name}
-                </button>
-              ))}
+        {/* Фильтр по организациям скрыт для пользователей, ограниченных одной больницей */}
+        {!hideHospitalFilter && (
+          <>
+            <span className="field-label">Фильтр по медорганизации</span>
+            <div className="field typeahead">
+              <input
+                className="field-input"
+                placeholder="Начните вводить название больницы"
+                value={orgValue}
+                onChange={(e) => onOrgSearchChange?.(e.target.value)}
+              />
+              {trimmed && suggestions.length > 0 && (
+                <div className="suggestions-list">
+                  {suggestions.map((option) => (
+                    <button
+                      key={option.id}
+                      className="suggestion"
+                      type="button"
+                      onClick={() => onHospitalSelect?.(option)}
+                    >
+                      {option.name}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
-        </div>
 
-        {hasSelection && (
-          <div className="selected-filters">
-            {selectedHospitals.map((hospital) => (
-              <div className="selected-filter" key={hospital.id}>
-                <span className="checkbox checked">
-                  <FaCheck size={12} />
-                </span>
-                <span>{hospital.name}</span>
+            {hasSelection && (
+              <div className="selected-filters">
+                {selectedHospitals.map((hospital) => (
+                  <div className="selected-filter" key={hospital.id}>
+                    <span className="checkbox checked">
+                      <FaCheck size={12} />
+                    </span>
+                    <span>{hospital.name}</span>
+                    <button
+                      className="icon-btn"
+                      title="Убрать из фильтра"
+                      type="button"
+                      onClick={() => onHospitalRemove?.(hospital.id)}
+                    >
+                      <FaTimes />
+                    </button>
+                  </div>
+                ))}
                 <button
-                  className="icon-btn"
-                  title="Убрать из фильтра"
+                  className="text-btn clear-filters"
                   type="button"
-                  onClick={() => onHospitalRemove?.(hospital.id)}
+                  onClick={onClearFilter}
                 >
-                  <FaTimes />
+                  Сбросить все
                 </button>
               </div>
-            ))}
-            <button
-              className="text-btn clear-filters"
-              type="button"
-              onClick={onClearFilter}
-            >
-              Сбросить все
-            </button>
-          </div>
+            )}
+          </>
         )}
 
         <span className="field-label">Поиск машины по номеру</span>

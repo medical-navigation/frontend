@@ -199,10 +199,76 @@ export default function MapPage({ regionBounds, regionCenter }) {
     const dispatch = useDispatch();
     const { user: currentUser } = useSelector((state) => state.user);
 
+    const hospitalOptions = hospitals;
+
+    const matchedUserRecord = useMemo(() => {
+        if (!currentUser?.login) return null;
+        return users.find(u => (u.login || '').toLowerCase() === currentUser.login.toLowerCase()) || null;
+    }, [currentUser, users]);
+
+    const userHospitalId = useMemo(() => {
+        const rawId =
+            currentUser?.medInstitutionId ??
+            currentUser?.hospitalId ??
+            currentUser?.hospital?.id ??
+            currentUser?.hospital?.medInstitutionId ??
+            matchedUserRecord?.medInstitutionId ??
+            matchedUserRecord?.hospitalId ??
+            null;
+        return rawId ? String(rawId) : '';
+    }, [currentUser, matchedUserRecord]);
+
+    const userHospitalName = useMemo(() => {
+        const nameCandidate =
+            currentUser?.hospitalName ||
+            matchedUserRecord?.hospitalName ||
+            currentUser?.hospital?.name ||
+            matchedUserRecord?.hospital?.name ||
+            matchedUserRecord?.hospital ||
+            '';
+        return typeof nameCandidate === 'string' ? nameCandidate.trim() : '';
+    }, [currentUser, matchedUserRecord]);
+
+    const resolvedHospitalOption = useMemo(() => {
+        if (!hospitalOptions.length && !userHospitalName && !userHospitalId) return null;
+        let match = null;
+        if (userHospitalId) {
+            match = hospitalOptions.find(h => String(h.id) === userHospitalId) || null;
+        }
+        if (!match && userHospitalName) {
+            const normName = userHospitalName.trim().toLowerCase();
+            match = hospitalOptions.find(h => (h.name || '').trim().toLowerCase() === normName) || null;
+        }
+        if (match) return match;
+        if (userHospitalName) {
+            return { id: userHospitalId || '', name: userHospitalName };
+        }
+        return null;
+    }, [hospitalOptions, userHospitalId, userHospitalName]);
+
+    const limitedHospitalId = resolvedHospitalOption?.id ? String(resolvedHospitalOption.id) : userHospitalId;
+    const limitedHospitalNameNormalized = (resolvedHospitalOption?.name || userHospitalName || '').trim().toLowerCase();
+    const isSingleHospitalMode = Boolean(resolvedHospitalOption);
+
     const mapBounds = useMemo(() => regionBounds && regionBounds.length === 2 ? regionBounds : null, [regionBounds]);
     const center = useMemo(() => regionCenter || [58.01, 56.23], [regionCenter]);
 
-    const hospitalOptions = hospitals;
+    const visibleHospitals = useMemo(() => {
+        if (!isSingleHospitalMode) return hospitalOptions;
+        if (!resolvedHospitalOption) return hospitalOptions;
+        const normId = resolvedHospitalOption.id ? String(resolvedHospitalOption.id) : '';
+        const match = normId
+            ? hospitalOptions.find(h => String(h.id) === normId)
+            : hospitalOptions.find(h => (h.name || '').trim().toLowerCase() === limitedHospitalNameNormalized);
+        if (match) return [match];
+        return [resolvedHospitalOption];
+    }, [hospitalOptions, isSingleHospitalMode, resolvedHospitalOption, limitedHospitalNameNormalized]);
+
+    const currentHospitalName = useMemo(() => {
+        if (resolvedHospitalOption?.name) return resolvedHospitalOption.name;
+        if (userHospitalName) return userHospitalName;
+        return '';
+    }, [resolvedHospitalOption, userHospitalName]);
 
     const mapCarForUi = useCallback(
         (carData) => normalizeCarWithHospitals(carData, hospitalOptions),
@@ -210,11 +276,18 @@ export default function MapPage({ regionBounds, regionCenter }) {
     );
 
     const filteredCars = useMemo(() => {
-        const activeHospitalIds = selectedHospitalFilters.map(item => String(item.id));
+        const activeHospitalIds = isSingleHospitalMode
+            ? (limitedHospitalId ? [limitedHospitalId] : [])
+            : selectedHospitalFilters.map(item => String(item.id));
         let list = activeHospitalIds.length
             ? cars.filter(car => {
                 const carHospitalId = String(car.medInstitutionId || car.hospitalId || '');
-                return activeHospitalIds.includes(carHospitalId);
+                if (activeHospitalIds.includes(carHospitalId)) return true;
+                if (limitedHospitalNameNormalized) {
+                    const carHospitalName = (car.hospitalName || car.hospital || '').trim().toLowerCase();
+                    if (carHospitalName && carHospitalName === limitedHospitalNameNormalized) return true;
+                }
+                return false;
             })
             : cars;
 
@@ -224,7 +297,7 @@ export default function MapPage({ regionBounds, regionCenter }) {
         }
 
         return list;
-    }, [cars, selectedHospitalFilters, carSearchValue]);
+    }, [cars, selectedHospitalFilters, carSearchValue, isSingleHospitalMode, limitedHospitalId, limitedHospitalNameNormalized]);
 
     const carsByHospital = useMemo(() => {
         const map = {};
@@ -648,10 +721,11 @@ export default function MapPage({ regionBounds, regionCenter }) {
             <CarListPanel
                 open={showCarPanel}
                 cars={filteredCars}
-                hospitalOptions={hospitalOptions}
+                hospitalOptions={visibleHospitals}
                 orgSearchValue={orgSearchValue}
                 carSearchValue={carSearchValue}
-                selectedHospitals={selectedHospitalFilters}
+                selectedHospitals={isSingleHospitalMode ? [] : selectedHospitalFilters}
+                hideHospitalFilter={isSingleHospitalMode}
                 onOrgSearchChange={setOrgSearchValue}
                 onCarSearchChange={setCarSearchValue}
                 onHospitalSelect={handleHospitalFilterSelect}
@@ -662,17 +736,18 @@ export default function MapPage({ regionBounds, regionCenter }) {
                 onDeleteCar={handleDeleteCar}
                 onBindTracker={handleBindTracker}
                 onUnbindTracker={handleUnbindTracker}
-                currentHospitalName={currentUser?.hospitalName}
+                currentHospitalName={currentHospitalName}
                 currentUserName={currentUser?.login}
                 onLogout={handleLogout}
             />
 
             <HospitalManagementPanel
                 open={showHospitalPanel}
-                hospitals={hospitalOptions}
+                hospitals={visibleHospitals}
                 carsByHospital={carsByHospital}
                 usersByHospital={usersByHospital}
                 expandedHospitalId={expandedHospitalId}
+                hideAddHospitalButton={isSingleHospitalMode}
                 onToggleHospital={toggleHospitalExpansion}
                 onAddHospital={() => openHospitalModal()}
                 onEditHospital={openHospitalModal}
@@ -690,7 +765,7 @@ export default function MapPage({ regionBounds, regionCenter }) {
 
             <EditCarPanel
                 car={editCar}
-                hospitalOptions={hospitalOptions}
+                hospitalOptions={isSingleHospitalMode ? visibleHospitals : hospitalOptions}
                 onChange={setEditCar}
                 onSave={handleSaveCar}
                 onClose={() => setEditCar(null)}
@@ -709,7 +784,7 @@ export default function MapPage({ regionBounds, regionCenter }) {
             <AddUserModal
                 open={showAddUser}
                 value={newUser}
-                hospitalOptions={hospitalOptions}
+                hospitalOptions={isSingleHospitalMode ? visibleHospitals : hospitalOptions}
                 onChange={setNewUser}
                 onSave={handleSaveUser}
                 onClose={closeUserModal}
